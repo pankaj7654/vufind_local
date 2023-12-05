@@ -1,0 +1,38 @@
+<?php
+
+return array (
+  'vufind' => 
+  array (
+    'plugin_managers' => 
+    array (
+      'ajaxhandler' => 
+      array (
+        'factories' => 
+        array (
+          'Inflibnet\\AjaxHandler\\FetchINFMemberNameByIP' => 'Inflibnet\\AjaxHandler\\FetchINFMemberNameByIPFactory',
+          'Inflibnet\\AjaxHandler\\FetchINFMemberCountByJournalID' => 'Inflibnet\\AjaxHandler\\FetchINFMemberCountByJournalIDFactory',
+          'Inflibnet\\AjaxHandler\\FetchINFMemberDetailsByJournalID' => 'Inflibnet\\AjaxHandler\\FetchINFMemberDetailsByJournalIDFactory',
+          'Inflibnet\\AjaxHandler\\INFMailerByAPI' => 'Inflibnet\\AjaxHandler\\INFMailerByAPIFactory',
+        ),
+        'aliases' => 
+        array (
+          'fetchinfmembernamebyip' => 'Inflibnet\\AjaxHandler\\FetchINFMemberNameByIP',
+          'fetchinfmembercountbyjournalid' => 'Inflibnet\\AjaxHandler\\FetchINFMemberCountByJournalID',
+          'fetchinfmemberdetailsbyjournalid' => 'Inflibnet\\AjaxHandler\\FetchINFMemberDetailsByJournalID',
+          'infmailerbyapi' => 'Inflibnet\\AjaxHandler\\INFMailerByAPI',
+        ),
+      ),
+      'recorddriver' => 
+      array (
+        'factories' => 
+        array (
+          'Inflibnet\\RecordDriver\\SolrDefault' => 'Inflibnet\\RecordDriver\\SolrDefaultFactory',
+        ),
+        'aliases' => 
+        array (
+          'VuFind\\RecordDriver\\SolrDefault' => 'Inflibnet\\RecordDriver\\SolrDefault',
+        ),
+      ),
+    ),
+  ),
+);

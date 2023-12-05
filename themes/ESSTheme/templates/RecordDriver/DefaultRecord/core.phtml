@@ -1,0 +1,214 @@
+<?php $this->metadata()->generateMetatags($this->driver);
+?>
+<div class="media" vocab="http://schema.org/" resource="#record" typeof="<?=$this->driver->getSchemaOrgFormats()?> Product">
+
+
+  <?php
+    $QRCode = $this->record($this->driver)->getQRCode("core");
+    $coverDetails = $this->record($this->driver)->getCoverDetails('core', 'medium', $this->record($this->driver)->getThumbnail('large'));
+    $cover = $coverDetails['html'];
+    $preview = ($this->previewOverride ?? false)
+      ? $this->previewOverride : $this->record($this->driver)->getPreviews();
+  ?>
+  <?php if ($QRCode || $cover || $preview): ?>
+    <div class="media-left <?=$this->escapeHtmlAttr($coverDetails['size'])?> img-col">
+      <?php /* Display thumbnail if appropriate: */ ?>
+      <?php if($cover): ?>
+        <?=$cover?>
+      <?php endif; ?>
+
+      <?php /* Display qrcode if appropriate: */ ?>
+      <?php if($QRCode): ?>
+        <span class="hidden-xs">
+          <br/><img alt="<?=$this->transEscAttr('QR Code')?>" class="qrcode" src="<?=$this->escapeHtmlAttr($QRCode);?>"/>
+        </span>
+      <?php endif; ?>
+
+      <?php // if you have a preview tab but want to move or remove the preview link
+         // from this area of the record view, this can be split into
+         // getPreviewData() (should stay here) and
+         // getPreviewLink() (can go in your desired tab) ?>
+      <?php if ($preview): ?>
+        <div class="record-previews">
+          <?=$preview?>
+        </div>
+      <?php endif; ?>
+    </div>
+  <?php endif; ?>
+  <div class="media-body">
+
+
+    <!-- echo strip_tags("Hello <b><h1>world!</h1></b>","<h1>"); -->
+    <?php
+    $getShortTitle = $this->driver->getShortTitle();
+    $getSubtitle = $this->driver->getSubtitle();
+    $getTitleSection = $this->driver->getTitleSection();
+    
+    $html = $getShortTitle;
+    $patterns = array(
+        '/<italic>/i' => '<span style="font-style: italic !important;">',
+        '/<\/italic>/i' => '</span>',
+        '/<sc>/i' => '<span style="font-variant: small-caps !important;">',
+        '/<\/sc>/i' => '</span>',
+        '/<bold>/i' => '<span style="font-weight: bold !important;">',
+        '/<\/bold>/i' => '</span>',
+        '/<monospace>/i' => '<span style="font-family: monospace !important;">',
+        '/<\/monospace>/i' => '</span>',
+        '/<overline>/i' => '<span style="text-decoration: overline !important;">',
+        '/<\/overline>/i' => '</span>',
+
+        // '/<fixed-case>/i' => '<span style="text-transform: ; !important;">',
+        // '/<\/fixed-case>/i' => '</span>',
+        // '/<overline-start>/i' => '<span style=" !important;">',
+        // '/<\/overline-start>/i' => '</span>',
+        // '/<overline-end>/i' => '<span style=" !important;">',
+        // '/<\/overline-end>/i' => '</span>',
+        // '/<roman>/i' => '<span style=" !important;">',
+        // '/<\/roman>/i' => '</span>',
+        // '/<sans-serif>/i' => '<span style=" !important;">',
+        // '/<\/sans-serif>/i' => '</span>',
+        // '/<strike>/i' => '<span style=" !important;">',
+        // '/<\/strike>/i' => '</span>',
+        // '/<underline>/i' => '<span style=" !important;">',
+        // '/<\/underline>/i' => '</span>',
+        // '/<underline-start>/i' => '<span style=" !important;">',
+        // '/<\/underline-start>/i' => '</span>',
+        // '/<underline-end>/i' => '<span style=" !important;">',
+        // '/<\/underline-end>/i' => '</span>',
+        // '/<ruby>/i' => '<span style=" !important;">',
+        // '/<\/ruby>/i' => '</span>'
+    );
+    $getShortTitle = preg_replace(array_keys($patterns), array_values($patterns), $html);
+
+    // $getShortTitle = strip_tags($getShortTitle2,"<b>,<h1>,<i>,<small>,<p>,<a>,<bdi>,<big>,<blockquote>,<br>,<div>,<li>,<ul>,<link>,<ol>,<s>,<span>,<u>");
+    $getSubtitle = strip_tags($getSubtitle,"<b>,<h1>,<i>,<small>,<p>,<a>,<bdi>,<big>,<blockquote>,<br>,<div>,<li>,<ul>,<link>,<ol>,<s>,<span>,<u>");
+    $getTitleSection = strip_tags($getTitleSection,"<b>,<h1>,<i>,<small>,<p>,<a>,<bdi>,<big>,<blockquote>,<br>,<div>,<li>,<ul>,<link>,<ol>,<s>,<span>,<u>");
+    // echo $getShortTitle2;
+    ?>
+    
+    <!-- $this->driver->getShortTitle()     // this line of code is already exist in next line for title print-->  
+
+    <h1 property="name"><?=$getShortTitle. ' ' . $getSubtitle . ' ' . $getTitleSection?></h1>
+
+    <?php foreach ($this->driver->tryMethod('getFullTitlesAltScript', [], []) as $altTitle): ?>
+      <div class="title-alt">
+        <?=$this->escapeHtml($altTitle)?>
+      </div>
+    <?php endforeach; ?>
+
+    <?php if(!empty($this->extraControls)): ?>
+      <?=$this->extraControls['actionControls'] ?? ''?>
+      <?=$this->extraControls['availabilityInfo'] ?? ''?>
+    <?php endif; ?>
+
+    <?php if ($this->searchOptions($this->driver->getSourceIdentifier())->getVersionsAction()): ?>
+      <?=$this->record($this->driver)->renderTemplate('versions-link.phtml')?>
+    <?php endif; ?>
+
+    <?php $summary = $this->driver->getSummary(); $summary = isset($summary[0]) ? $this->escapeHtml($summary[0]) : false; ?>
+    <?php if ($summary): ?>
+      <p><?=$this->truncate($summary, 300)?></p>
+
+      <?php if(strlen($summary) > 300): ?>
+        <p><a href="<?=$this->escapeHtmlAttr($this->recordLinker()->getTabUrl($this->driver, 'Description'))?>#tabnav"><?=$this->transEsc('Full description')?></a></p>
+      <?php endif; ?>
+    <?php endif; ?>
+
+    <?php if ($this->userlist()->getMode() !== 'disabled'): ?>
+      <?php /* Display the lists that this record is saved to */ ?>
+      <div class="savedLists">
+        <strong><?=$this->transEsc("Saved in")?>:</strong>
+      </div>
+    <?php endif; ?>
+
+    <?php /* Display Main Details */ ?>
+    <?php
+      $formatter = $this->recordDataFormatter();
+      $coreFields = $formatter->getData($driver, $formatter->getDefaults('core'));
+      $coreFields = $this->record($this->driver)->getDataForTable($coreFields);
+    ?>
+     <?php if (!empty($coreFields)): ?>
+      <table class="table table-striped">
+        <caption class="sr-only"><?=$this->transEsc('Bibliographic Details')?></caption>
+        <?php //$result = $this->record($this->driver)->fetchjournalId();?>
+        <?php foreach ($coreFields as $current1):// print_r($coreFields['demo']['value']['author']); exit;  ?>
+              <?php $openUrl = $this->openUrl($this->driver, 'results');
+              $openUrlActive = $openUrl->isActive();
+              $doi = $this->doi($this->driver, 'results');
+              $doiActive = $doi->isActive();
+              // Account for replace_other_urls setting
+              $urls = $this->record($this->driver)->getLinkDetails($openUrlActive);
+               
+              if ($openUrlActive || $doiActive || !empty($urls)) : ?>
+                <?php if ($openUrlActive) : ?>
+                  <br />
+                  <?= $openUrl->renderTemplate() ?>
+                <?php endif; ?>
+                <?php if ($doiActive) : ?>
+                  <br />
+                  <?= $doi->renderTemplate() ?>
+                <?php endif; ?>
+                <?php if (!is_array($urls)) $urls = [];
+                if (!$this->driver->isCollection()) :
+                  foreach ($urls as $current) : 
+                      if($current1['label'] == "Online access an article"){ ?> 
+                      <?php if($coreFields['demo']['value']['openAccess'] == "yes"){?>
+                        <tr><th><?=$this->transEsc($current1['label'])?>:</th><td><span class="label label-success">Open Access</span>&nbsp;<span><a class="label label-success" href="<?= $this->escapeHtmlAttr($this->proxyUrl($current['url'])) ?>" class="fulltext" target="new">Access from publisher [FT] <i class="fa fa-external-link" aria-hidden="true"></i></a></span></td></tr>
+                      <?php } elseif($coreFields['demo']['value']['accessStatus']['publisherAccess'] == 0 && $coreFields['demo']['value']['accessStatus']['DDR'] == 0){?>
+                          <tr><th><?=$this->transEsc($current1['label'])?>:</th><td><span><a class="label label-primary" href="<?= $this->escapeHtmlAttr($this->proxyUrl($current['url'])) ?>" class="fulltext" target="new">Access from publisher [ABS] <i class="fa fa-external-link" aria-hidden="true"></i></a></span> </td></tr>
+                      <?php } elseif($coreFields['demo']['value']['accessStatus']['publisherAccess'] == 0 && $coreFields['demo']['value']['accessStatus']['DDR'] == 1){ ?>
+                          <tr><th><?=$this->transEsc($current1['label'])?>:</th><td><span type="button" class="" style="cursor: pointer;" data-toggle="modal" data-jname="<?= $this->record($this->driver)->getTitleHtml() ?>" onClick="loadAccessMem(this)" id="accessmemname" data-whatever="" data-jid="<?= $coreFields['demo']['value']['jid'] ?>" data-count="<?= $coreFields['demo']['value']['accessStatus']['DDR'] ?>" data-replyTo="<?= $coreFields['demo']['value']['email'] ?>" data-memId="<?= $coreFields['demo']['value']['memid'] ?>" data-doi="<?= $coreFields['demo']['value']['doi'] ?>" data-title="<?= $coreFields['demo']['value']['title'] ?>" data-containertitle="<?= $coreFields['demo']['value']['container_title'] ?>" data-issn="<?= $coreFields['demo']['value']['issn'] ?>" data-publisher="<?= $coreFields['demo']['value']['publisher'] ?>" data-url="<?= $coreFields['demo']['value']['url'] ?>" data-format="<?= $coreFields['demo']['value']['format'] ?>" data-docid="<?= $coreFields['demo']['value']['docId'] ?>" data-volume="<?= $coreFields['demo']['value']['container_volume'] ?>" data-issue="<?= $coreFields['demo']['value']['container_issue'] ?>" data-year="<?= $coreFields['demo']['value']['publishDate'] ?>" data-author="<?= $coreFields['demo']['value']['author'] ?>" >
+                          <span class="label label-warning">DDR available</span>
+                    </span> &nbsp;<span><a class="label label-primary" href="<?= $this->escapeHtmlAttr($this->proxyUrl($current['url'])) ?>" class="fulltext" target="new">Access from publisher [ABS] <i class="fa fa-external-link" aria-hidden="true"></i></a></span></td></tr>
+                      <?php } elseif($coreFields['demo']['value']['accessStatus']['publisherAccess'] == 1 && $coreFields['demo']['value']['accessStatus']['DDR'] == 0){ ?>
+                          <tr><th><?=$this->transEsc($current1['label'])?>:</th><td><span><a class="label label-success" href="<?= $this->escapeHtmlAttr($this->proxyUrl($current['url'])) ?>" class="fulltext" target="new">Access from publisher [FT] <i class="fa fa-external-link" aria-hidden="true"></i></a></span></td></tr>
+                      <?php } } else { ?>
+                      <tr><th><?=$this->transEsc($current1['label'])?>:</th><td><?=$current1['value']?></td></tr>
+                      <?php } ?>
+                  <?php endforeach; ?>
+                <?php endif; ?>
+              <?php endif; ?>
+
+        <?php endforeach; ?>
+      </table>
+
+
+      <div class="preload" style="position: fixed;left: 45%;top: 45%;width: 100%;height: 100%;z-index: 9999;" hidden><img src="https://media.tenor.com/On7kvXhzml4AAAAj/loading-gif.gif"></div>
+
+      <div class="modal fade" id="showOrgenization" tabindex="-1" role="dialog" data-keyboard="false" data-backdrop="static">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="btn-close closebtn" style="float: right;" data-lightbox data-dismiss="modal" aria-label="Close">X</button>
+              <h4 class="modal-title" id="journalName">Access available subscribing institute</h4>
+            </div>        
+            <div class="modal-body">
+              <div class="subscribingInstituteNameList" data-lightbox></div>  
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+              <!-- <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal" data-dismiss="modal">Make request</button> -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+        <div class="modal fade" id="requestModal" tabindex="-1" role="dialog" data-keyboard="false" data-backdrop="static">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content"> 
+              <button type="button" class="btn-close closebtn" style="float: right;" data-lightbox data-dismiss="modal" aria-label="Close">X</button>
+              <div class="memberDetailsForILLRequest"></div>
+            </div>
+          </div>
+        </div>
+
+        <script>
+            $('#requestModal').on('hidden.bs.modal', function () {
+              $('body').css('padding-right', '0');
+            });
+        </script>
+
+    <?php endif; ?>
+    <?php /* End Main Details */ ?>
+  </div>
+</div>
